@@ -7,7 +7,7 @@
   import type { availableDialogBoxNames, dialogBoxDetailsObj } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faBold, faCloud, faDownload, faFile, faItalic, faLink, faPaintBrush, faPencil, faStrikethrough, faSubscript, faSuperscript, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faBold, faCloud, faDownload, faFile, faItalic, faLink, faPaintBrush, faPencil, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { useEditor, EditorContent } from '@tiptap/vue-3';
   import StarterKit from '@tiptap/starter-kit';
@@ -30,7 +30,18 @@
 
   const editor = useEditor({
     content: "",
-    extensions: [StarterKit, Underline, Highlight, Link, Subscript, Superscript, Color, TextStyle],
+    extensions: [
+      StarterKit, 
+      Underline,
+      Link, 
+      Subscript, 
+      Superscript, 
+      Color, 
+      TextStyle,
+      Highlight.configure({
+        multicolor: true
+      })
+    ],
     autofocus: true,
     editable: true,
     editorProps: {
@@ -131,6 +142,34 @@
     }
   }
 
+  function useInputBackgroundColor(event: Event): void {
+    const backgroundColorInputElement = event.target as HTMLInputElement;
+    if(backgroundColorInputElement && backgroundColorInputElement.value) {
+      editor?.value?.chain().focus().toggleHighlight({ color: backgroundColorInputElement.value.length? backgroundColorInputElement.value : `#eeeeee`}).run();
+    }
+  }
+
+  function useInputColor(event: Event): void {
+    const colorInputElement = event.target as HTMLInputElement;
+    if(colorInputElement && colorInputElement.value) {
+      editor?.value?.chain().focus().setColor(colorInputElement.value.length?  colorInputElement.value : `#222222`).run();
+    }
+  }
+
+  function convert_RGB_to_HEX(RGB_value: string): string {
+    if(RGB_value.includes('#')) return RGB_value;
+
+    const rgbComponents_toNumber = RGB_value.match(/\d+/g)?.map(comp => parseInt(comp));
+    if(!rgbComponents_toNumber) return RGB_value;
+
+    return rgbComponents_toNumber.reduce((hexText: string, comp: number) => { return  hexText += changeRGBComponentToHex(comp)}, '#');
+  }
+
+  function changeRGBComponentToHex(comp: number): string {
+    const hex = comp.toString(16);
+    return hex.length === 1 ?  "0" + hex : hex;
+  }
+
 </script>
 
 <template>
@@ -146,7 +185,52 @@
             <span class="w-full text-xs row-start-2 col-start-2"> Last modified: Today </span>
         </section>
 
-        <div class="grid grid-cols-5 grid-rows-auto gap-2 items-center justify-center">
+        <div class="grid grid-cols-6 grid-rows-auto gap-2 items-center justify-center">
+            
+          <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="`bg-[#eeeb]`"
+                @click=""
+            > 
+                <FontAwesomeIcon :icon="faT" class="text-sm drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none
+                  self-center mx-auto mb-[0.35rem]
+                " />
+
+                <input
+                  title="font color"
+                  placeholder="#222222"
+                  id="textColorInput"
+                  class="absolute top-0 left-0 w-full h-full pt-[1.15rem] px-[0.15rem] rounded bg-transparent hover:cursor-pointer"
+                  type="color"
+                  @input="(event: Event) => useInputColor(event)"
+                  :value="(editor?.getAttributes('textStyle').color?.length)? convert_RGB_to_HEX(editor?.getAttributes('textStyle').color)  :  `#222222`"
+                />
+            </div>
+
+            <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="`bg-[#eeeb]`"
+                @click=""
+            >
+                <FontAwesomeIcon :icon="faPaintBrush" class="text-sm drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none 
+                  self-center mx-auto mb-[0.35rem]"
+                />
+
+                <input
+                  title="background color"
+                  placeholder="#eeeeee"
+                  id="backgroundColorInput"
+                  class="absolute top-0 left-0 w-full h-full pt-[1.15rem] px-[0.15rem] rounded bg-transparent hover:cursor-pointer"
+                  type="color"
+                  @input="(event: Event) => useInputBackgroundColor(event)"
+                  :value="(editor?.getAttributes('highlight')?.color)? editor?.getAttributes('highlight').color : `#eeeeee`"
+                />
+            </div>
+          
             <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
                   transition-colors hover:cursor-pointer
                 "
@@ -192,18 +276,6 @@
             >
                 <FontAwesomeIcon :icon="faStrikethrough" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
                   :class="editor?.isActive('strike')? `text-[#ddd]` : `text-[#333]`"
-                />
-            </div>
-
-            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
-                  transition-colors hover:cursor-pointer
-                "
-                data-role="style"
-                :class="editor?.isActive('highlight')? `bg-[#222b]` : `bg-[#eeeb]`"
-                @click="editor?.chain()?.focus()?.toggleHighlight()?.run()"
-            >
-                <FontAwesomeIcon :icon="faPaintBrush" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
-                  :class="editor?.isActive('highlight')? `text-[#ddd]` : `text-[#333]`"
                 />
             </div>
 
