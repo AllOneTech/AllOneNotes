@@ -7,7 +7,7 @@
   import type { availableDialogBoxNames, dialogBoxDetailsObj } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faBold, faCloud, faDownload, faFile, faItalic, faLink, faPaintBrush, faPencil, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAngleDown, faAngleUp, faBold, faCloud, faDownload, faFile, faItalic, faLink, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { useEditor, EditorContent } from '@tiptap/vue-3';
   import StarterKit from '@tiptap/starter-kit';
@@ -18,10 +18,13 @@
   import Superscript from '@tiptap/extension-superscript';
   import Color from '@tiptap/extension-color';
   import TextStyle from '@tiptap/extension-text-style';
+  import FontSize from 'tiptap-extension-font-size';
 
   const dialogBoxType = ref<availableDialogBoxNames>(null);
   const linkButton = ref<null | HTMLDivElement>(null);
   const [isTextSelected, selectionText] = [ref<boolean>(false), ref<string>('')];
+  const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
+  const workspaceEl = ref<null | HTMLElement>(null);
 
   const currentDialogBoxDetails: dialogBoxDetailsObj = reactive({
     name: null,
@@ -31,6 +34,7 @@
   const editor = useEditor({
     content: "",
     extensions: [
+      FontSize,
       StarterKit, 
       Underline,
       Link, 
@@ -111,6 +115,8 @@
 
     document.addEventListener('click', (e: MouseEvent) => trackSelectedText(e));
     document.addEventListener('keydown', () => removeSelectedText());
+
+    updateEditorFontSize();
   })
 
   function removeSelectedText(): void {
@@ -170,6 +176,46 @@
     return hex.length === 1 ?  "0" + hex : hex;
   }
 
+  const validateInputValue = function(ev: Event) {
+    const inputEl = ev.target as HTMLInputElement;
+
+    const inputtedFontSizeValue = parseInt(inputEl.value) || fontSizeInput.min;
+
+    inputEl.addEventListener('input', () => {
+
+      if(inputEl.validity.patternMismatch) { inputEl.value = inputtedFontSizeValue.toString(); }
+      else if(/^\d+$/.test(inputEl.value)) {
+        if(parseInt(inputEl.value) > fontSizeInput.max) { inputEl.value = fontSizeInput.max.toString(); }
+        fontSizeInput.current.value = parseInt(inputEl.value);
+      }
+      
+    }, { once: true });
+
+  }
+
+  const correctDisplayedInputValue = function(ev: Event) {
+    const inputEl = ev.target as HTMLInputElement;
+    if((!/^[0-9]+$/.test(inputEl.value)) || (parseInt(inputEl.value) < fontSizeInput.min)) { fontSizeInput.current.value = fontSizeInput.min; }
+    else if(parseInt(inputEl.value) > fontSizeInput.max) { fontSizeInput.current.value = fontSizeInput.max; }
+
+    inputEl.value = fontSizeInput.current.value.toString();
+    updateEditorFontSize();
+  }
+
+  const adjustFontSize = function(action: 'increase' | 'decrease') {
+    const currentFontSize = retrieveFontSizeValue();
+    if(action === 'decrease') { fontSizeInput.current.value = currentFontSize - ((currentFontSize === fontSizeInput.min)? 0 : 1) }
+    else if(action === 'increase') { fontSizeInput.current.value = currentFontSize + ((currentFontSize === fontSizeInput.max)? 0 : 1) }
+    updateEditorFontSize();
+  }
+
+  const updateEditorFontSize = () => editor?.value?.chain().focus().setFontSize(`${fontSizeInput.current.value}px`).run();
+
+  const retrieveFontSizeValue = function(): number {
+    const retrievedFontSize: string = editor?.value?.getAttributes('textStyle').fontSize || '';
+    return retrievedFontSize === '' ?   fontSizeInput.default  :  parseInt(retrievedFontSize.replace(/\D+/g, ""));
+  }
+
 </script>
 
 <template>
@@ -185,9 +231,9 @@
             <span class="w-full text-xs row-start-2 col-start-2"> Last modified: Today </span>
         </section>
 
-        <div class="grid grid-cols-6 grid-rows-auto gap-2 items-center justify-center">
+        <div class="grid grid-cols-7 grid-rows-auto gap-2 items-center justify-center">
             
-          <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+          <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -209,7 +255,7 @@
                 />
             </div>
 
-            <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -231,7 +277,7 @@
                 />
             </div>
           
-            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -243,7 +289,7 @@
                 />
             </div>
 
-            <div class="flex items-center justify-center w-6 h-6 p-4  rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4  rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -255,7 +301,7 @@
                 />
             </div>
 
-            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -267,7 +313,7 @@
                 />
             </div>
 
-            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -279,7 +325,7 @@
                 />
             </div>
 
-            <div ref="linkButton" class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div ref="linkButton" class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors
                 "
                 data-role="style"
@@ -295,7 +341,7 @@
                 />
             </div>
 
-            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -307,7 +353,7 @@
                 />
             </div>
 
-            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
@@ -319,9 +365,30 @@
                 />
             </div>
 
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="`bg-[#eeeb]`"
+                @click=""
+            >
+                <FontAwesomeIcon :icon="faAngleUp" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="`bg-[#eeeb]`"
+                @click=""
+            >
+                <FontAwesomeIcon :icon="faAngleDown" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
+            </div>
+
+
             <!---->
 
-            <div class="flex items-center justify-center w-6 h-6 p-4 bg-[#eeeb] rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 bg-[#eeeb] rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                     transition-colors hover:cursor-pointer hover:bg-[hsl(122,_50%,_70%)]
                 " 
                 onclick="downloadtxt()"
@@ -329,7 +396,7 @@
                 <FontAwesomeIcon :icon="faDownload" class="text-base text-[#333] drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" @click="" />
             </div>
 
-            <div class="flex items-center justify-center w-6 h-6 p-4 bg-[#eeeb] rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222,_0_0_0.2rem_#444]
+            <div class="flex items-center justify-center w-6 h-6 p-4 bg-[#eeeb] rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                     transition-colors hover:cursor-pointer hover:bg-[hsl(122,_50%,_70%)]
                 " 
                 onclick="importTxtFile()"
@@ -339,12 +406,62 @@
 
         </div>
 
-        <div></div>
+        <div class="flex items-center">
+
+          <div class="grid items-center content-center grid-cols-[1fr_2fr_1fr] grid-rows-1 justify-center gap-x-1">
+
+            <div class="group relative w-full h-full flex items-center">
+              <div class="group-hover:bg-[#2225] group-hover:cursor-pointer absolute w-6 h-6 rounded mx-auto"
+                @click="adjustFontSize('decrease')"
+              ></div>
+              <FontAwesomeIcon :icon="faMinus" class="text-lg p-1  pointer-events-none" />
+            </div>
+
+            <div>
+              <input type="text" inputmode="numeric" min="6" max="96" pattern="^[1-9]+[0-9]*$" 
+                class="text-sm w-10 font-semibold text-center py-1 px-1 outline-gray-500 bg-[#eee] border-2 border-[#222] appearance-none cursor-pointer rounded hover:cursor-text" 
+                title="font size"
+                list="availableFontSizes"
+                :ref="fontSizeInput.DOMElement"
+                :value="retrieveFontSizeValue()"
+                :placeholder="fontSizeInput.min.toString()"
+                @beforeinput="(ev) => validateInputValue(ev)"
+                @focusout="(ev) => correctDisplayedInputValue(ev)"
+              />
+<!--               <datalist id="availableFontSizes" class="min-h-[40vh]">
+                <option> 6 </option>
+                <option> 8 </option>
+                <option> 10 </option>
+                <option> 12 </option>
+                <option> 14 </option>
+                <option> 16 </option>
+                <option> 18 </option>
+                <option> 24 </option>
+                <option> 30 </option>
+                <option> 36 </option>
+                <option> 48 </option>
+                <option> 60 </option>
+                <option> 72 </option>
+                <option> 96 </option>
+              </datalist> -->
+            </div>
+            
+            <div class="group relative w-full h-full flex items-center">
+              <div class="group-hover:bg-[#2225] group-hover:cursor-pointer absolute w-6 h-6 rounded mx-auto"
+                @click="adjustFontSize('increase')"
+              ></div>
+              <FontAwesomeIcon :icon="faPlus" class="text-lg p-1 pointer-events-none" />
+            </div>
+
+          </div>
+
+        </div>
+
     </div>
   </header>
 
   <main>
-    <section id="notebook">
+    <section id="notebook" >
 
       <EditorContent :editor="editor" id=""
         class="workspace
@@ -369,6 +486,17 @@
   .document-description {
     grid-row: 2; /* Do not remove this - as Tailwind alternative seems not to work */
     grid-column: 2; /* Do not remove this - as Tailwind alternative seems not to work */
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number]{
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
 
 </style>
