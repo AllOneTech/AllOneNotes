@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import type { availableDialogBoxNames, dialogBoxDetailsObj } from '@/types/allTypes';
+import type { elementDetailObj } from '@/types/allTypes';
 import LinkDialogBox from './dialog-boxes/LinkDialogBox.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faClose } from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +10,7 @@ const dialogBoxElement = ref<null | HTMLElement>(null);
 const emits = defineEmits(['handleAddLink', 'handleCloseDialogBox'])
 
 const props = defineProps<{
-    data: dialogBoxDetailsObj
+    data: elementDetailObj
 }>();
 
 function closeDialogBox() { emits('handleCloseDialogBox') }
@@ -24,7 +24,7 @@ onMounted(() => {
     
     dialogBoxElement.value.style.top = `0px`;
     dialogBoxElement.value.style.right = `0px`;
-
+    /* console.log('pdn: ', props.data.name) */
 })
 
 </script>

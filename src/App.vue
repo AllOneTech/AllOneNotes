@@ -2,12 +2,13 @@
   import Notepad from './components/Notepad.vue';
   import Navbar from './components/Navbar.vue';
   import DialogBox from './components/DialogBox.vue';
+  import OptionsList from './components/OptionsList.vue';
 
   import { ref, computed, reactive, onMounted } from 'vue';
-  import type { availableDialogBoxNames, dialogBoxDetailsObj } from './types/allTypes';
+  import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faAngleDown, faAngleUp, faBold, faCloud, faDownload, faFile, faItalic, faLink, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faBackwardStep, faBold, faCloud, faDownload, faFile, faForwardStep, faItalic, faLink, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { useEditor, EditorContent } from '@tiptap/vue-3';
   import StarterKit from '@tiptap/starter-kit';
@@ -20,16 +21,37 @@
   import TextStyle from '@tiptap/extension-text-style';
   import FontSize from 'tiptap-extension-font-size';
 
-  const dialogBoxType = ref<availableDialogBoxNames>(null);
+  const dialogBoxType = ref<allowedElementNamespace>(null);
+  const optionsListType = ref<allowedElementNamespace>(null);
+
   const linkButton = ref<null | HTMLDivElement>(null);
   const [isTextSelected, selectionText] = [ref<boolean>(false), ref<string>('')];
   const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
   const workspaceEl = ref<null | HTMLElement>(null);
 
-  const currentDialogBoxDetails: dialogBoxDetailsObj = reactive({
-    name: null,
-    coords: { x: 0, y: 0 }
-  });
+  const dynamicElementsDetails: dynamicElementsDetailsObj = {
+    dialogBox: reactive({
+      name: null,
+      coords: {
+        x: 0,
+        y: 0
+      },
+      optional: {
+        targetWidth: 0,
+      }
+    }),
+    
+    optionsList: reactive({
+      name: null,
+      coords: {
+        x: 0,
+        y: 0
+      },
+      optional: {
+        targetWidth: 0,
+      }
+    }),
+  };
 
   const editor = useEditor({
     content: "",
@@ -55,7 +77,24 @@
     }
   });
 
-  function createDialogBox(dialogBoxName: availableDialogBoxNames, target: EventTarget | null) { 
+  function createOptionsList(ev: FocusEvent, listCategoryName: availableOptionsListNames) {
+    if(!ev.target) return;
+    const targetedButton = ev.target as HTMLDivElement; 
+
+    const targetedButton_coords = targetedButton.getBoundingClientRect();
+    
+    console.log(`
+      OPTIONLIST TOP: ${Math.floor(targetedButton_coords.top)}, \n
+      OPTIONLIST LEFT: ${Math.floor(targetedButton_coords.left)}, \n
+      -------------- \n
+      OPTIONLIST HEIGHT: ${Math.floor(targetedButton_coords.height)}, \n
+      OPTIONLIST WIDTH: ${Math.floor(targetedButton_coords.width)}, \n
+    `);
+
+    Object.assign(dynamicElementsDetails.optionsList, { name: listCategoryName, coords: {y: Math.floor(targetedButton_coords.top) + Math.floor(targetedButton_coords.height), x: Math.floor(targetedButton_coords.left)}, optional: { targetWidth: Math.floor(targetedButton_coords.width)  }});
+  }
+
+  function createDialogBox(dialogBoxName: allowedElementNamespace, target: EventTarget | null) { 
     if(!target) return;
     if(editor?.value?.isActive('link')) { handleCloseLink(); return; }
     const targetedButton = target as HTMLDivElement;
@@ -68,7 +107,7 @@
       WIDTH: ${Math.floor(targetedButton.getBoundingClientRect().width)}, \n
     `);
     
-    Object.assign(currentDialogBoxDetails, {name: dialogBoxName, coords: {y: Math.floor(targetedButton.getBoundingClientRect().top), x: Math.floor(targetedButton.getBoundingClientRect().left)}});
+    Object.assign(dynamicElementsDetails.dialogBox, {name: dialogBoxName, coords: {y: Math.floor(targetedButton.getBoundingClientRect().top), x: Math.floor(targetedButton.getBoundingClientRect().left)}});
   
     // Last of all - perform a state change and thus cause the Dialog Box to appear
     dialogBoxType.value = dialogBoxName; 
@@ -87,6 +126,12 @@
   function handleCloseDialogBox() {
     // Close the dialog box already
     dialogBoxType.value = null;
+  }
+
+  function handleSetFontSize(newFontSize: number) {
+    fontSizeInput.current.value = newFontSize;
+    updateEditorFontSize();
+    handleCloseOptionsList();
   }
   
   function testSelectedTextOrigin(anchorNode: Node | null) {
@@ -214,6 +259,15 @@
   const retrieveFontSizeValue = function(): number {
     const retrievedFontSize: string = editor?.value?.getAttributes('textStyle').fontSize || '';
     return retrievedFontSize === '' ?   fontSizeInput.default  :  parseInt(retrievedFontSize.replace(/\D+/g, ""));
+  }
+
+  const openOptionsList = function(ev: FocusEvent, listCategory: availableOptionsListNames) {
+    createOptionsList(ev, listCategory);
+    optionsListType.value = listCategory;
+  }
+
+  const handleCloseOptionsList = function() {
+    optionsListType.value = null;
   }
 
 </script>
@@ -366,23 +420,25 @@
             </div>
 
             <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
-                  transition-colors hover:cursor-pointer
+                  transition-colors
                 "
-                data-role="style"
-                :class="`bg-[#eeeb]`"
-                @click=""
+                data-role="history"
+                :class="editor?.can().undo()? `bg-[#eeeb] hover:cursor-pointer` : `bg-[#7777]`"
+                @click="editor?.chain().focus().undo().run()"
+                :disabled="!editor?.can().undo()"
             >
-                <FontAwesomeIcon :icon="faAngleUp" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
+                <FontAwesomeIcon :icon="faBackwardStep" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
             </div>
 
             <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
-                  transition-colors hover:cursor-pointer
+                  transition-colors
                 "
-                data-role="style"
-                :class="`bg-[#eeeb]`"
-                @click=""
+                data-role="history"
+                :class="editor?.can().redo()? `bg-[#eeeb] hover:cursor-pointer` : `bg-[#7777]`"
+                @click="editor?.chain().focus().redo().run()"
+                :disabled="!editor?.can().redo()"
             >
-                <FontAwesomeIcon :icon="faAngleDown" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
+                <FontAwesomeIcon :icon="faForwardStep" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
             </div>
 
 
@@ -421,29 +477,13 @@
               <input type="text" inputmode="numeric" min="6" max="96" pattern="^[1-9]+[0-9]*$" 
                 class="text-sm w-10 font-semibold text-center py-1 px-1 outline-gray-500 bg-[#eee] border-2 border-[#222] appearance-none cursor-pointer rounded hover:cursor-text" 
                 title="font size"
-                list="availableFontSizes"
                 :ref="fontSizeInput.DOMElement"
                 :value="retrieveFontSizeValue()"
                 :placeholder="fontSizeInput.min.toString()"
                 @beforeinput="(ev) => validateInputValue(ev)"
-                @focusout="(ev) => correctDisplayedInputValue(ev)"
+                @focusout="(ev) => [correctDisplayedInputValue(ev)/* , handleCloseOptionsList() */]"
+                @focusin="(ev) => openOptionsList(ev, 'fontsize')"
               />
-<!--               <datalist id="availableFontSizes" class="min-h-[40vh]">
-                <option> 6 </option>
-                <option> 8 </option>
-                <option> 10 </option>
-                <option> 12 </option>
-                <option> 14 </option>
-                <option> 16 </option>
-                <option> 18 </option>
-                <option> 24 </option>
-                <option> 30 </option>
-                <option> 36 </option>
-                <option> 48 </option>
-                <option> 60 </option>
-                <option> 72 </option>
-                <option> 96 </option>
-              </datalist> -->
             </div>
             
             <div class="group relative w-full h-full flex items-center">
@@ -473,7 +513,14 @@
   </main>
 
   <div>
-    <DialogBox v-if="dialogBoxType" :data="currentDialogBoxDetails"
+    <OptionsList v-if="optionsListType" :data="dynamicElementsDetails.optionsList"
+      @handleCloseOptionsList="handleCloseOptionsList"
+      @handleSetFontSize="handleSetFontSize"
+    />
+  </div>
+
+  <div>
+    <DialogBox v-if="dialogBoxType" :data="dynamicElementsDetails.dialogBox"
       @handleCloseDialogBox="handleCloseDialogBox"
       @handleAddLink="handleAddLink"
     />
