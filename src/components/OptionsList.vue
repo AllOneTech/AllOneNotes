@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import type { elementDetailObj } from '@/types/allTypes';
+import type { elementDetailObj } from '../types/allTypes';
 import FontsizeOptionsList from './options-lists/FontsizeOptionsList.vue';
 import FontfamilyOptionsList from './options-lists/FontfamilyOptionsList.vue';
 
 const optionsListElement = ref<null | HTMLElement>(null);
 
-const emits = defineEmits(['handleSetFontSize', 'handleCloseOptionsList'])
+const emits = defineEmits(['handleSetFontSize', 'handleSetFontFamily', 'handleCloseOptionsList'])
 
 const props = defineProps<{
     data: elementDetailObj
 }>();
 
 function closeOptionList() { emits('handleCloseOptionsList'); }
-function setFontSize(fontSize: number) { emits('handleSetFontSize', fontSize); console.log('PICKED FONT SIZE: ', fontSize); }
+function setFontSize(fontSize: number) { emits('handleSetFontSize', fontSize);  }
+function setFontFamily(fontFamily: string) { emits('handleSetFontFamily', fontFamily); console.log('PICKED FONT Family: ', fontFamily); }
 
 onMounted(() => {
     if(!optionsListElement.value) return;
@@ -33,7 +34,7 @@ onMounted(() => {
             <ul class="relative z-[60] border-2 border-[#222c] border-double border-t-none rounded-md">
                 <!-- CONDITIONAL OPTIONS LISTS -->
                 <FontsizeOptionsList v-if="props.data.name === 'fontsize'" @confirmSetFontSize="setFontSize" />
-                <FontfamilyOptionsList v-else-if="props.data.name = 'fontfamily'" />
+                <FontfamilyOptionsList v-else-if="props.data.name = 'fontfamily'" @confirmSetFontFamily="setFontFamily" />
             </ul>
         </section>
     </div>

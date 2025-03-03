@@ -20,6 +20,7 @@
   import Color from '@tiptap/extension-color';
   import TextStyle from '@tiptap/extension-text-style';
   import FontSize from 'tiptap-extension-font-size';
+  import FontFamily from '@tiptap/extension-font-family';
 
   const dialogBoxType = ref<allowedElementNamespace>(null);
   const optionsListType = ref<allowedElementNamespace>(null);
@@ -27,6 +28,7 @@
   const linkButton = ref<null | HTMLDivElement>(null);
   const [isTextSelected, selectionText] = [ref<boolean>(false), ref<string>('')];
   const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
+  const fontFamilyInput = { current: ref<string>('Plus Jakarta Sans'), default: 'Plus Jakarta Sans' }
   const workspaceEl = ref<null | HTMLElement>(null);
 
   const dynamicElementsDetails: dynamicElementsDetailsObj = {
@@ -57,6 +59,7 @@
     content: "",
     extensions: [
       FontSize,
+      FontFamily,
       StarterKit, 
       Underline,
       Link, 
@@ -131,6 +134,12 @@
   function handleSetFontSize(newFontSize: number) {
     fontSizeInput.current.value = newFontSize;
     updateEditorFontSize();
+    handleCloseOptionsList();
+  }
+
+  function handleSetFontFamily(newFontFamily: string) {
+    fontFamilyInput.current.value = newFontFamily;
+    updateEditorFontFamily();
     handleCloseOptionsList();
   }
   
@@ -255,11 +264,17 @@
   }
 
   const updateEditorFontSize = () => editor?.value?.chain().focus().setFontSize(`${fontSizeInput.current.value}px`).run();
+  const updateEditorFontFamily = () => editor?.value?.chain().focus().setFontFamily(`${fontFamilyInput.current.value}`).run();
 
   const retrieveFontSizeValue = function(): number {
     const retrievedFontSize: string = editor?.value?.getAttributes('textStyle').fontSize || '';
     return retrievedFontSize === '' ?   fontSizeInput.default  :  parseInt(retrievedFontSize.replace(/\D+/g, ""));
   }
+
+  const retrieveFontFamily = computed(() => {
+    const retrievedFontFamily: string = editor?.value?.getAttributes('textStyle').fontFamily || '';
+    return retrievedFontFamily === '' ? fontFamilyInput.default :  retrievedFontFamily;
+  });
 
   const openOptionsList = function(ev: FocusEvent, listCategory: availableOptionsListNames) {
     createOptionsList(ev, listCategory);
@@ -495,6 +510,16 @@
 
           </div>
 
+          <span class="mx-8"> <!-- REMOVE THIS SPAN ELEMENT AFTER DEVELOPMENT --> </span>
+
+          <div> 
+            <div class="w-32 font-semibold text-center py-1 px-3  truncate outline-gray-500 bg-[#eee] border-2 border-[#222] appearance-none cursor-pointer rounded hover:cursor-text"
+              @click="(ev) => openOptionsList(ev, 'fontfamily')"
+            >  
+              <p class="text-xs  pointer-events-none text-center truncate"> {{ retrieveFontFamily }} </p>
+            </div>
+          </div>
+
         </div>
 
     </div>
@@ -516,6 +541,7 @@
     <OptionsList v-if="optionsListType" :data="dynamicElementsDetails.optionsList"
       @handleCloseOptionsList="handleCloseOptionsList"
       @handleSetFontSize="handleSetFontSize"
+      @handleSetFontFamily="handleSetFontFamily"
     />
   </div>
 

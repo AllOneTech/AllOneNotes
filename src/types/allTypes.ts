@@ -31,6 +31,12 @@ export type inputProperties = {
     validatingFunction: any
 }
 
+export type fontFamilyOptionsObj = {
+    name: string,
+    sourceURL: string,
+    isAlreadyLoaded: boolean
+}
+
 export type linkInputs = {
    /*  alias: inputProperties, */
     url: inputProperties

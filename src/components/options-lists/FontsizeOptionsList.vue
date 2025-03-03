@@ -10,8 +10,8 @@
 
 <template>
     <li v-for="option in FONTSIZE_OPTIONS" @click="emits('confirmSetFontSize', option)"
-        class="py-1 bg-[#eeeb] text-sm font-medium text-center
-            hover:cursor-pointer hover:bg-[#2226] hover:text-[#eeeb] transition-colors
+        class="py-1 bg-[#eeeb] text-sm font-medium text-[#222] text-center transition-colors border-[#222d] border-solid
+            hover:cursor-pointer hover:bg-[#eeec] hover:font-bold hover:border-x-2
         "
     > 
         {{ option }} 

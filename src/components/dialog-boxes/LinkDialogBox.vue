@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
-import type { inputProperties, linkInputs } from '@/types/allTypes';
+import type { inputProperties, linkInputs } from '../../types/allTypes';
 
 const emits = defineEmits(['confirmAddLink']);
 

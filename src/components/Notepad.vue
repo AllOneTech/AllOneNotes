@@ -3,7 +3,7 @@
     import StarterKit from '@tiptap/starter-kit';
 
     const editor = useEditor({
-        content: "<strong>I'm running Tiptap with Vue.js. 🎉</strong>",
+        content: "",
         extensions: [StarterKit],
     })
 

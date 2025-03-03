@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import type { elementDetailObj } from '@/types/allTypes';
+import type { elementDetailObj } from '../types/allTypes';
 import LinkDialogBox from './dialog-boxes/LinkDialogBox.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faClose } from '@fortawesome/free-solid-svg-icons';
