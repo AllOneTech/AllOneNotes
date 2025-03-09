@@ -8,7 +8,7 @@
   import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faBackwardStep, faBold, faCloud, faDownload, faFile, faForwardStep, faItalic, faLink, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faDownload, faFile, faForwardStep, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { useEditor, EditorContent } from '@tiptap/vue-3';
   import StarterKit from '@tiptap/starter-kit';
@@ -21,6 +21,11 @@
   import TextStyle from '@tiptap/extension-text-style';
   import FontSize from 'tiptap-extension-font-size';
   import FontFamily from '@tiptap/extension-font-family';
+  import TextAlign from '@tiptap/extension-text-align';
+  import OrderedList from '@tiptap/extension-ordered-list';
+  import BulletList from '@tiptap/extension-bullet-list';
+  import ListItem from '@tiptap/extension-list-item';
+  import Placeholder from '@tiptap/extension-placeholder';
 
   const dialogBoxType = ref<allowedElementNamespace>(null);
   const optionsListType = ref<allowedElementNamespace>(null);
@@ -60,16 +65,35 @@
     extensions: [
       FontSize,
       FontFamily,
-      StarterKit, 
       Underline,
       Link, 
       Subscript, 
       Superscript, 
       Color, 
       TextStyle,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
       Highlight.configure({
         multicolor: true
-      })
+      }),
+      Placeholder.configure({
+        placeholder: 'Write content here...',
+        emptyEditorClass:
+          'cursor-text before:content-[attr(data-placeholder)] before:absolute before:text-mauve-11 before:opacity-50 before-pointer-events-none',
+      }),
+      StarterKit.configure({
+        bulletList: {
+          HTMLAttributes: {
+            class: `list-disc pl-4`
+          }
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: `list-decimal pl-4`
+          }
+        }
+      }), 
     ],
     autofocus: true,
     editable: true,
@@ -263,7 +287,11 @@
     updateEditorFontSize();
   }
 
-  const updateEditorFontSize = () => editor?.value?.chain().focus().setFontSize(`${fontSizeInput.current.value}px`).run();
+  const updateEditorFontSize = () => {
+    editor?.value?.chain().focus().setFontSize(`${fontSizeInput.current.value}px`).run();
+    //editor?.value?.chain().focus().set
+  }
+
   const updateEditorFontFamily = () => editor?.value?.chain().focus().setFontFamily(`${fontFamilyInput.current.value}`).run();
 
   const retrieveFontSizeValue = function(): number {
@@ -300,7 +328,7 @@
             <span class="w-full text-xs row-start-2 col-start-2"> Last modified: Today </span>
         </section>
 
-        <div class="grid grid-cols-7 grid-rows-auto gap-2 items-center justify-center">
+        <div class="grid grid-cols-11 grid-rows-auto gap-2 items-center justify-center">
             
           <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
@@ -456,6 +484,79 @@
                 <FontAwesomeIcon :icon="faForwardStep" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" />
             </div>
 
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="`bg-[#eeeb]`"
+                @click="editor?.chain().focus().setTextAlign('left').run()"
+            >
+                <FontAwesomeIcon :icon="faAlignLeft" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="`text-[#333]`"
+                />
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="editor?.isActive({ textAlign: 'center' })? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().setTextAlign('center').run()"
+            >
+                <FontAwesomeIcon :icon="faAlignCenter" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive({ textAlign: 'center' })? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="editor?.isActive({ textAlign: 'right' })? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().setTextAlign('right').run()"
+            >
+                <FontAwesomeIcon :icon="faAlignRight" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive({ textAlign: 'right' })? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="editor?.isActive({ textAlign: 'justify' })? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().setTextAlign('justify').run()"
+            >
+                <FontAwesomeIcon :icon="faAlignJustify" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive({ textAlign: 'justify' })? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+            <!-- WWW -->
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="editor?.isActive('bulletList')? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().toggleBulletList().run()"
+            >
+                <FontAwesomeIcon :icon="faListUl" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive('bulletList')? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="editor?.isActive('orderedList')? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().toggleOrderedList().run()"
+            >
+                <FontAwesomeIcon :icon="faListOl" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive('orderedList')? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
 
             <!---->
 
@@ -526,11 +627,12 @@
   </header>
 
   <main>
-    <section id="notebook" >
+    <section id="notebook" class="min-w-[600px]">
 
       <EditorContent :editor="editor" id=""
         class="workspace
           text-base min-h-screen w-[min(60%,_840px)] mx-auto my-12 px-9 py-16 bg-white rounded shadow-[0.1rem_0.1rem_0.3rem_0.3rem_#333]
+          leading-normal
         "
       />
 
