@@ -8,7 +8,9 @@
   import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faDownload, faFile, faForwardStep, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+
+  import { common, createLowlight } from 'lowlight';
 
   import { useEditor, EditorContent } from '@tiptap/vue-3';
   import StarterKit from '@tiptap/starter-kit';
@@ -26,6 +28,7 @@
   import BulletList from '@tiptap/extension-bullet-list';
   import ListItem from '@tiptap/extension-list-item';
   import Placeholder from '@tiptap/extension-placeholder';
+  import CodeBlockLowLight from '@tiptap/extension-code-block-lowlight';
 
   const dialogBoxType = ref<allowedElementNamespace>(null);
   const optionsListType = ref<allowedElementNamespace>(null);
@@ -78,11 +81,20 @@
         multicolor: true
       }),
       Placeholder.configure({
-        placeholder: 'Write content here...',
+        placeholder: ({ node }) => {
+          const nodesThatDoNotAcceptPlaceholder = ['orderedList', 'bulletList', 'codeBlock'];
+          if (nodesThatDoNotAcceptPlaceholder.find(nodeName => nodeName === node.type.name)) return '';
+          return 'Write content here...';
+        },
         emptyEditorClass:
-          'cursor-text before:content-[attr(data-placeholder)] before:absolute before:text-mauve-11 before:opacity-50 before-pointer-events-none',
+          'cursor-text before:left-0 top-0 before:content-[attr(data-placeholder)] before:absolute before:text-mauve-11 before:opacity-50 before-pointer-events-none',
+      }),
+      CodeBlockLowLight.configure({
+        lowlight: createLowlight(common),
+        /* defaultLanguage: 'html' */
       }),
       StarterKit.configure({
+        codeBlock: false,
         bulletList: {
           HTMLAttributes: {
             class: `list-disc pl-4`
@@ -93,7 +105,7 @@
             class: `list-decimal pl-4`
           }
         }
-      }), 
+      }),
     ],
     autofocus: true,
     editable: true,
@@ -557,6 +569,23 @@
                   :class="editor?.isActive('orderedList')? `text-[#ddd]` : `text-[#333]`"
                 />
             </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="editor?.isActive('codeBlock')? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().toggleCodeBlock().run()"
+            >
+                <FontAwesomeIcon :icon="faCode" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive('codeBlock')? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+            <!-- CODE BLOCK BUTTON ISSUES :
+              1) ___EXITING - if code block is active, clicking outside of the code block should cause the cursor focus to abandon the current code block instance. To be exited with editor.commands.exitCode()
+              2) ___CREATING_VIA_SELECTION - normally create code block with setCodeBlock(). Otherwise, if the editor text is selected while clicking the code button, opt for toggleCodeBlock() instead.
+            -->
 
             <!---->
 
