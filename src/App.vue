@@ -8,7 +8,7 @@
   import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { common, createLowlight } from 'lowlight';
 
@@ -29,6 +29,8 @@
   import ListItem from '@tiptap/extension-list-item';
   import Placeholder from '@tiptap/extension-placeholder';
   import CodeBlockLowLight from '@tiptap/extension-code-block-lowlight';
+  import Image from '@tiptap/extension-image';
+  import Youtube from '@tiptap/extension-youtube';
 
   const dialogBoxType = ref<allowedElementNamespace>(null);
   const optionsListType = ref<allowedElementNamespace>(null);
@@ -38,6 +40,7 @@
   const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
   const fontFamilyInput = { current: ref<string>('Plus Jakarta Sans'), default: 'Plus Jakarta Sans' }
   const workspaceEl = ref<null | HTMLElement>(null);
+  const selectedEditorElement = ref<null | HTMLElement>(null);
 
   const dynamicElementsDetails: dynamicElementsDetailsObj = {
     dialogBox: reactive({
@@ -74,6 +77,16 @@
       Superscript, 
       Color, 
       TextStyle,
+      Youtube.configure({
+        HTMLAttributes: {
+          class: `my-4`
+        }
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: `my-4`
+        }
+      }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
@@ -152,6 +165,11 @@
     dialogBoxType.value = dialogBoxName; 
   }
 
+  function handleDeleteNode() {
+    selectedEditorElement.value?.remove();
+    selectedEditorElement.value = null;
+  }
+
   function handleCloseLink() { 
     editor?.value?.chain().focus().setColor('#000').unsetUnderline().run();
     editor?.value?.commands.unsetLink(); 
@@ -159,6 +177,16 @@
 
   function handleAddLink(urlText: string) {
     editor?.value?.chain().focus().setColor('hsl(208, 70%, 60%)').setUnderline().extendMarkRange('link').setLink({ href: urlText, target: '_blank' }).run()
+    handleCloseDialogBox();
+  }
+
+  function handleAddImage(url: string) {
+    editor?.value?.chain().focus().setImage({ src: url }).run();
+    handleCloseDialogBox();
+  }
+
+  function handleAddVideo(url: string) {
+    editor?.value?.chain().focus().setYoutubeVideo({ src: url }).run();
     handleCloseDialogBox();
   }
 
@@ -179,11 +207,11 @@
     handleCloseOptionsList();
   }
   
-  function testSelectedTextOrigin(anchorNode: Node | null) {
+  function testSelectedNodeOrigin(anchorNode: Node | null) {
     // This function checks if the text selection happens inside or outside the editor workspace 
     if(!anchorNode) return false;
     if(anchorNode.parentElement && anchorNode.parentElement.classList.contains('workspace')) return true;
-    return testSelectedTextOrigin(anchorNode.parentElement);
+    return testSelectedNodeOrigin(anchorNode.parentElement);
   }
 
   const testIfTextIsSelected = computed(() => isTextSelected.value);
@@ -198,7 +226,7 @@
     document.addEventListener('selectionchange', () => {
       const selectedText = document.getSelection();
       if(selectedText && selectedText.toString().length > 0) {
-        const isSelectedTextComingFromEditor = testSelectedTextOrigin(selectedText.anchorNode);
+        const isSelectedTextComingFromEditor = testSelectedNodeOrigin(selectedText.anchorNode);
         isTextSelected.value = isSelectedTextComingFromEditor;
       }
     })
@@ -206,8 +234,25 @@
     document.addEventListener('click', (e: MouseEvent) => trackSelectedText(e));
     document.addEventListener('keydown', () => removeSelectedText());
 
+    if(workspaceEl.value) {
+      workspaceEl.value.addEventListener('click', (e: MouseEvent) => checkCurrentNodeSelection(e));
+      // Add the following - useful when user deletes an image with backspace or any other key
+      /* workspaceEl.value.addEventListener('keypress', (e: KeyboardEvent) => checkCurrentNodeSelection(e)); */
+    }
+
+
     updateEditorFontSize();
   })
+
+  function checkCurrentNodeSelection(e: MouseEvent): void {
+    const target = e.target as HTMLElement;
+    if(target) {
+      console.dir(testSelectedNodeOrigin(target));
+      if(testSelectedNodeOrigin(target)) {
+        selectedEditorElement.value = target;
+      };
+    }
+  }
 
   function removeSelectedText(): void {
     // If any dialog box is open, we do not check for possible removal of Selection on any key down event
@@ -325,6 +370,8 @@
     optionsListType.value = null;
   }
 
+  const selectedEditorElement_getTagName = computed(() => selectedEditorElement.value?.nodeName.toLowerCase());
+
 </script>
 
 <template>
@@ -333,7 +380,7 @@
         <section id="toolset-documentinfo" class="grid grid-rows-[auto_auto] grid-cols-[auto_auto] place-content-start gap-x-6">
             <FontAwesomeIcon :icon="faFile" class="text-6xl text-[hsl(222,_40%,_40%)] row-start-1 row-span-2 drop-shadow-[0.1rem_0.1rem_0.1rem_hsl(222,_60%,_60%)] _documentIcon" />
             <div class="flex items-center gap-5">
-                <p class="document-title text-2xl my-1"> Document </p>
+                <p class="document-title text-2xl my-1"> Document <!-- - {{ selectedEditorElement_getTagName }} --> </p>
                 <FontAwesomeIcon :icon="faPencil" class="text-base text-[#333]" @click="" />
             </div>
             
@@ -587,6 +634,34 @@
               2) ___CREATING_VIA_SELECTION - normally create code block with setCodeBlock(). Otherwise, if the editor text is selected while clicking the code button, opt for toggleCodeBlock() instead.
             -->
 
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="selectedEditorElement_getTagName === `img`? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="(event: MouseEvent) => { console.log(selectedEditorElement_getTagName); selectedEditorElement_getTagName === `img` ? handleDeleteNode() : createDialogBox('image', event.target) }"
+            >
+              <!-- TO REMOVE IMAGE, PERFORM A SELECTION REMOVAL AS:  editor?.chain().focus().deleteSelection().run() -->
+                <FontAwesomeIcon :icon="faImage" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="selectedEditorElement_getTagName === `img`? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
+                :class="selectedEditorElement_getTagName === `div`? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="(event: MouseEvent) => { console.log(selectedEditorElement_getTagName); selectedEditorElement_getTagName === `div` ? handleDeleteNode() : createDialogBox('video', event.target) }"
+            >
+              <!-- TO REMOVE VIDEO, PERFORM A SELECTION REMOVAL AS:  editor?.chain().focus().deleteSelection().run() -->
+                <FontAwesomeIcon :icon="faPlay" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="selectedEditorElement_getTagName === `div`? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
             <!---->
 
             <div class="flex items-center justify-center w-6 h-6 p-4 bg-[#eeeb] rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
@@ -656,7 +731,7 @@
   </header>
 
   <main>
-    <section id="notebook" class="min-w-[600px]">
+    <section id="notebook" ref="workspaceEl" class="min-w-[600px]">
 
       <EditorContent :editor="editor" id=""
         class="workspace
@@ -680,6 +755,8 @@
     <DialogBox v-if="dialogBoxType" :data="dynamicElementsDetails.dialogBox"
       @handleCloseDialogBox="handleCloseDialogBox"
       @handleAddLink="handleAddLink"
+      @handleAddImage="handleAddImage"
+      @handleAddVideo="handleAddVideo"
     />
   </div>
 

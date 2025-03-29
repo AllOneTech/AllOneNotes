@@ -2,19 +2,23 @@
 import { ref, computed, onMounted } from 'vue';
 import type { elementDetailObj } from '../types/allTypes';
 import LinkDialogBox from './dialog-boxes/LinkDialogBox.vue';
+import ImageDialogBox from './dialog-boxes/ImageDialogBox.vue';
+import VideoDialogBox from './dialog-boxes/VideoDialogBox.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faClose } from '@fortawesome/free-solid-svg-icons';
 
 const dialogBoxElement = ref<null | HTMLElement>(null);
 
-const emits = defineEmits(['handleAddLink', 'handleCloseDialogBox'])
+const emits = defineEmits(['handleAddLink', 'handleAddImage', 'handleAddVideo', 'handleCloseDialogBox'])
 
 const props = defineProps<{
     data: elementDetailObj
 }>();
 
 function closeDialogBox() { emits('handleCloseDialogBox') }
-function addLink(urlText:  string) { emits('handleAddLink', urlText) }
+function addLink(urlText:  string) { emits('handleAddLink', urlText) };
+function addImage(url: string) { emits('handleAddImage', url )};
+function addVideo(url: string) { emits('handleAddVideo', url )};
 
 onMounted(() => {
     if(!dialogBoxElement.value) return;
@@ -40,6 +44,8 @@ onMounted(() => {
             
             <!-- CONDITIONAL DIALOG BOXES -->
             <LinkDialogBox v-if="props.data.name === 'link'" @confirmAddLink="addLink" />
+            <ImageDialogBox v-else-if="props.data.name === 'image'" @confirmAddImage="addImage" />
+            <VideoDialogBox v-else-if="props.data.name === 'video'" @confirmAddVideo="addVideo" />
         </section>
     </div>
 </template>

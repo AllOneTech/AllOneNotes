@@ -2,7 +2,7 @@ import type { Ref } from "vue";
 
 
 const dynamicElements: string[] = ['dialogBox', 'optionsList'] as const;
-type availableDialogBoxNames = 'link';
+type availableDialogBoxNames = 'link' | 'image' | 'video';
 export type availableOptionsListNames = 'fontsize' | 'fontfamily';
 export type allowedElementNamespace = null | availableOptionsListNames | availableDialogBoxNames;
 
@@ -39,5 +39,9 @@ export type fontFamilyOptionsObj = {
 
 export type linkInputs = {
    /*  alias: inputProperties, */
+    url: inputProperties
+}
+
+export type imageInputs = {
     url: inputProperties
 }
