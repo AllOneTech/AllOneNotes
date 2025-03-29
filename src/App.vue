@@ -35,6 +35,7 @@
   const dialogBoxType = ref<allowedElementNamespace>(null);
   const optionsListType = ref<allowedElementNamespace>(null);
 
+  const documentTitle = { default: `Document`, current: ref<string>('Document') };
   const linkButton = ref<null | HTMLDivElement>(null);
   const [isTextSelected, selectionText] = [ref<boolean>(false), ref<string>('')];
   const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
@@ -371,6 +372,10 @@
   }
 
   const selectedEditorElement_getTagName = computed(() => selectedEditorElement.value?.nodeName.toLowerCase());
+  
+  const checkDocumentTitle = function(): void {
+    if(!documentTitle.current.value.length) {documentTitle.current.value = documentTitle.default };
+  }
 
 </script>
 
@@ -380,8 +385,10 @@
         <section id="toolset-documentinfo" class="grid grid-rows-[auto_auto] grid-cols-[auto_auto] place-content-start gap-x-6">
             <FontAwesomeIcon :icon="faFile" class="text-6xl text-[hsl(222,_40%,_40%)] row-start-1 row-span-2 drop-shadow-[0.1rem_0.1rem_0.1rem_hsl(222,_60%,_60%)] _documentIcon" />
             <div class="flex items-center gap-5">
-                <p class="document-title text-2xl my-1"> Document <!-- - {{ selectedEditorElement_getTagName }} --> </p>
-                <FontAwesomeIcon :icon="faPencil" class="text-base text-[#333]" @click="" />
+                <div class="document-title text-2xl my-1 w-content"> 
+                  <input type="text" class="w-fit max-w-40 bg-inherit truncate border-b-2 border-b-[#0000] focus:outline-none focus:border-b-black" v-model="documentTitle.current.value" @focusout="checkDocumentTitle" />  <!-- - {{ selectedEditorElement_getTagName }} --> 
+                </div>
+                <!-- <FontAwesomeIcon :icon="faPencil" class="text-base text-[#333]" @click="" /> -->
             </div>
             
             <span class="w-full text-xs row-start-2 col-start-2"> Last modified: Today </span>
